@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Torn Training Command</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131e30;--panel2:#19273d;--line:#2a3b55;--text:#e8eef8;--muted:#9eafc5;--accent:#67d5c2;--gold:#f1c56a;--red:#ef8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:22px max(18px,calc((100% - 1120px)/2));background:#101a2b;border-bottom:1px solid var(--line)}
+h1{font-size:23px;margin:0 0 4px;letter-spacing:.3px}header p{margin:0;color:var(--muted);font-size:13px}
+main{max-width:1120px;margin:auto;padding:18px;display:grid;gap:16px}
+nav{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+nav button,.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 13px;white-space:nowrap}
+nav button.active,.btn.primary{background:#17483f;border-color:#287c6d;color:#dffff8}
+section{display:none}section.active{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;margin:16px 0 8px;color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+input,select{width:100%;padding:10px;background:#0c1626;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit}
+input:focus,select:focus{outline:1px solid var(--accent)}
+.stat{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.metric{background:var(--panel2);padding:13px;border-radius:10px}.metric small{display:block;color:var(--muted)}
+.muted{color:var(--muted);font-size:12px}.good{color:var(--accent)}.warn{color:var(--gold)}
+.bar{height:8px;background:#27364b;border-radius:20px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;background:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
+.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#282719;color:#e9dfbd;border-radius:5px;font-size:12px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+@media(min-width:760px){.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
+</style>
+</head>
+<body>
+<header><h1>TORN TRAINING COMMAND</h1><p>Independent character training planner · Local browser storage · No Torn connection</p></header>
+<main>
+<nav id="tabs">
+<button class="active" data-tab="dashboard">Dashboard</button><button data-tab="profile">Character & stats</button><button data-tab="modifiers">Training modifiers</button><button data-tab="planner">Training prescription</button><button data-tab="history">Progress & history</button><button data-tab="goals">Goals</button>
+</nav>
+<section id="dashboard" class="active">
+<div class="panel"><div class="row"><h2>Character overview</h2><span class="muted" id="savedStatus">Saved on this device</span></div><div class="cards" id="statCards"></div></div>
+<div class="split"><div class="panel"><h2>Training priorities</h2><div id="priority"></div></div><div class="panel"><h2>Current projections</h2><div id="projection"></div></div></div>
+<div class="panel"><h2>Today's prescription</h2><div id="todayPlan"></div><div class="actions"><button class="btn primary" onclick="showTab('planner')">Open training planner</button><button class="btn" onclick="showTab('profile')">Update stats</button></div></div>
+</section>
+<section id="profile">
+<div class="panel"><h2>Character profile</h2><div class="grid">
+<div><label>Character name</label><input id="name" placeholder="Character name"></div><div><label>Level</label><input id="level" type="number" min="1"></div><div><label>Current job</label><input id="job" placeholder="Job / company"></div><div><label>Faction</label><input id="faction" placeholder="Faction name"></div><div><label>Planning horizon (days)</label><input id="horizon" type="number" min="1"></div>
+</div><h3>Battle stats</h3><div class="grid">
+<div><label>Strength</label><input id="str" type="number" min="0"></div><div><label>Defense</label><input id="def" type="number" min="0"></div><div><label>Speed</label><input id="spd" type="number" min="0"></div><div><label>Dexterity</label><input id="dex" type="number" min="0"></div>
+</div><div class="actions"><button class="btn primary" onclick="saveAndRender()">Save character data</button></div></div>
+</section>
+<section id="modifiers">
+<div class="panel"><h2>Training environment</h2><div class="grid">
+<div><label>Gym name</label><input id="gym" placeholder="Current gym"></div><div><label>Gym dots (e.g. 7.3)</label><input id="dots" type="number" min="0" step=".1"></div><div><label>Current happiness</label><input id="happy" type="number" min="0" max="99999"></div><div><label>Maximum happiness</label><input id="maxHappy" type="number" min="0" max="99999"></div><div><label>Daily energy available for gym</label><input id="energy" type="number" min="0"></div><div><label>Energy per train</label><select id="energyTrain"><option>5</option><option selected>10</option><option>25</option><option>50</option></select></div>
+</div><h3>Gym gain modifiers (%)</h3><div class="grid">
+<div><label>All-stat gym bonus</label><input id="allBonus" type="number" step=".1"></div><div><label>DEX gym bonus</label><input id="dexBonus" type="number" step=".1"></div><div><label>SPD gym bonus</label><input id="spdBonus" type="number" step=".1"></div><div><label>STR gym bonus</label><input id="strBonus" type="number" step=".1"></div><div><label>DEF gym bonus</label><input id="defBonus" type="number" step=".1"></div>
+</div><h3>Permanent/passive stat bonuses (%)</h3><div class="grid">
+<div><label>DEX passive bonus</label><input id="dexPassive" type="number" step=".1"></div><div><label>SPD passive bonus</label><input id="spdPassive" type="number" step=".1"></div><div><label>STR passive bonus</label><input id="strPassive" type="number" step=".1"></div><div><label>DEF passive bonus</label><input id="defPassive" type="number" step=".1"></div>
+</div><h3>Daily energy sources (planning inputs)</h3><div class="grid">
+<div><label>Natural energy</label><input id="natural" type="number" min="0"></div><div><label>Xanax energy budget</label><input id="xanax" type="number" min="0"></div><div><label>Refill energy</label><input id="refill" type="number" min="0"></div><div><label>Other energy / cans</label><input id="otherEnergy" type="number" min="0"></div>
+</div><div class="actions"><button class="btn primary" onclick="saveAndRender()">Save modifiers</button></div></div>
+</section>
+<section id="planner">
+<div class="panel"><h2>Training prescription</h2><p class="muted">The default profile prioritizes DEX, then SPD. Change the allocation to suit your strategy.</p>
+<div class="grid"><div><label>DEX allocation (%)</label><input id="dexAlloc" type="number" min="0" max="100"></div><div><label>SPD allocation (%)</label><input id="spdAlloc" type="number" min="0" max="100"></div><div><label>STR allocation (%)</label><input id="strAlloc" type="number" min="0" max="100"></div><div><label>DEF allocation (%)</label><input id="defAlloc" type="number" min="0" max="100"></div></div>
+<div class="actions"><button class="btn primary" onclick="saveAndRender()">Calculate prescription</button><button class="btn" onclick="resetAllocation()">Restore DEX-focused plan</button></div>
+<div id="prescription" style="margin-top:16px"></div>
+<div class="notice" style="margin-top:14px">This is a planning estimate, not a guaranteed in-game gain. The actual Torn formula is not fully published; the estimator is based on a community approximation. Record actual gains to calibrate your own results.</div>
+</div>
+</section>
+<section id="history">
+<div class="panel"><h2>Record a training result</h2><div class="grid">
+<div><label>Date</label><input id="logDate" type="date"></div><div><label>DEX gain</label><input id="gainDex" type="number" min="0"></div><div><label>SPD gain</label><input id="gainSpd" type="number" min="0"></div><div><label>STR gain</label><input id="gainStr" type="number" min="0"></div><div><label>DEF gain</label><input id="gainDef" type="number" min="0"></div><div><label>Energy spent</label><input id="spent" type="number" min="0"></div><div><label>Happiness at start</label><input id="logHappy" type="number" min="0"></div><div><label>Notes</label><input id="logNotes" placeholder="Gym, jumps, bonuses, etc."></div>
+</div><div class="actions"><button class="btn primary" onclick="addLog()">Save training entry</button><button class="btn" onclick="exportData()">Export backup (JSON)</button><button class="btn" onclick="document.getElementById('importFile').click()">Import backup</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div>
+<div class="panel"><h2>Training history</h2><div id="historyTable"></div></div>
+</section>
+<section id="goals">
+<div class="panel"><h2>Stat targets</h2><p class="muted">Set a target for each stat. Projections update when you change your training assumptions.</p><div class="grid">
+<div><label>DEX target</label><input id="goalDex" type="number" min="0"></div><div><label>SPD target</label><input id="goalSpd" type="number" min="0"></div><div><label>STR target</label><input id="goalStr" type="number" min="0"></div><div><label>DEF target</label><input id="goalDef" type="number" min="0"></div>
+</div><div class="actions"><button class="btn primary" onclick="saveAndRender()">Save targets</button></div><div id="goalReport" style="margin-top:15px"></div></div>
+</section>
+</main>
+<script>
+const defaults={name:"",level:64,job:"",faction:"",horizon:425,str:174329,def:183616,spd:390799,dex:860298,gym:"",dots:7,happy:50000,maxHappy:99999,energy:500,energyTrain:10,allBonus:0,dexBonus:0,spdBonus:0,strBonus:0,defBonus:0,dexPassive:0,spdPassive:0,strPassive:0,defPassive:0,natural:150,xanax:500,refill:0,otherEnergy:0,dexAlloc:75,spdAlloc:25,strAlloc:0,defAlloc:0,goalDex:1500000,goalSpd:1000000,goalStr:174329,goalDef:183616,logs:[]};
+let d={...defaults};
+const ids=Object.keys(defaults).filter(k=>k!=="logs");
+function load(){try{const x=JSON.parse(localStorage.getItem("tornTrainingCommand")||"{}");d={...defaults,...x};if(!Array.isArray(d.logs))d.logs=[]}catch(e){d={...defaults}}}
+function val(id){const el=document.getElementById(id);return el?el.value:""}
+function num(id){return Number(val(id))||0}
+function put(id,v){const el=document.getElementById(id);if(el)el.value=v??""}
+function sync(){ids.forEach(k=>put(k,d[k]));}
+function read(){ids.forEach(k=>{const el=document.getElementById(k);if(el)d[k]=el.type==="number"?(el.value===""?0:Number(el.value)):el.value});}
+function saveAndRender(){read();localStorage.setItem("tornTrainingCommand",JSON.stringify(d));render();document.getElementById("savedStatus").textContent="Saved just now";}
+function fmt(n){return Math.round(n||0).toLocaleString("en-US")}
+function total(){return d.str+d.def+d.spd+d.dex}
+function gain(stat,energy){const s=d[stat],h=Math.max(0,d.happy),dots=Math.max(0,d.dots),b=d.allBonus+(d[stat+"Bonus"]||0);return ((dots*4)*((.00019106*s)+(.00226263*h)+.55))*(1+b/100)/150*energy}
+function allocation(){let a={dex:d.dexAlloc,spd:d.spdAlloc,str:d.strAlloc,def:d.defAlloc};let sum=Object.values(a).reduce((x,y)=>x+y,0);return {a,sum}}
+function render(){
+ const stats=[["STR",d.str],["DEF",d.def],["SPD",d.spd],["DEX",d.dex]];
+ document.getElementById("statCards").innerHTML=stats.map(([n,v])=>`<div class="metric"><small>${n}</small><div class="stat">${fmt(v)}</div></div>`).join("")+`<div class="metric"><small>Total battle stats</small><div class="stat">${fmt(total())}</div></div>`;
+ document.getElementById("priority").innerHTML=`<p><b class="good">1 · Dexterity</b><br><span class="muted">Primary: evasion, stealth resistance and escape.</span></p><p><b class="good">2 · Speed</b><br><span class="muted">Secondary: accuracy and opponent escape prevention.</span></p><p><b>3 · Strength / Defense</b><br><span class="muted">Currently receive only the allocation you prescribe.</span></p>`;
+ const e=d.energy||d.natural+d.xanax+d.refill+d.otherEnergy;
+ const a=allocation();const daily={dex:gain("dex",e*(d.dexAlloc/100)),spd:gain("spd",e*(d.spdAlloc/100)),str:gain("str",e*(d.strAlloc/100)),def:gain("def",e*(d.defAlloc/100))};
+ document.getElementById("projection").innerHTML=`<p>Daily gym energy budget: <b>${fmt(e)} E</b></p><p>Estimated DEX gain/day: <b>${fmt(daily.dex)}</b></p><p>Estimated SPD gain/day: <b>${fmt(daily.spd)}</b></p><p class="muted">Projection uses current happiness and gym assumptions.</p>`;
+ const p=prescriptionHtml(e,a,daily);document.getElementById("todayPlan").innerHTML=p;document.getElementById("prescription").innerHTML=p;
+ renderHistory();renderGoals(daily);
+}
+function prescriptionHtml(e,a,g){if(a.sum!==100)return `<div class="notice">Your allocations total ${a.sum}%. Adjust them to exactly 100% before using this prescription.</div>`;
+ const tr=d.energyTrain||10;let rows=[["DEX",d.dexAlloc,g.dex],["SPD",d.spdAlloc,g.spd],["STR",d.strAlloc,g.str],["DEF",d.defAlloc,g.def]];
+ return `<p>Allocate <b>${fmt(e)} energy</b> across ${rows.filter(x=>x[1]>0).length} training priorities.</p><table><tr><th>Stat</th><th>Share</th><th>Energy</th><th>Estimated gain</th><th>Trains (${tr}E)</th></tr>${rows.map(([s,pct,gn])=>`<tr><td>${s}</td><td>${pct}%</td><td>${fmt(e*pct/100)} E</td><td>+${fmt(gn)}</td><td>${Math.floor(e*pct/100/tr)}</td></tr>`).join("")}</table><p class="muted">Estimated total gain: +${fmt(Object.values(g).reduce((x,y)=>x+y,0))} battle stats/day. Whole-train counts are rounded down.</p>`;
+}
+function renderGoals(g){let rows=[["DEX",d.dex,d.goalDex,g.dex],["SPD",d.spd,d.goalSpd,g.spd],["STR",d.str,d.goalStr,g.str],["DEF",d.def,d.goalDef,g.def]];
+ document.getElementById("goalReport").innerHTML=rows.map(([s,cur,target,rate])=>{let left=Math.max(0,target-cur),days=rate>0?Math.ceil(left/rate):null,pct=target>0?Math.min(100,cur/target*100):0;return `<div style="margin:13px 0"><div class="row"><b>${s}: ${fmt(cur)} / ${fmt(target)}</b><span class="muted">${days===null?"Set energy/gym assumptions":left===0?"Target reached":fmt(days)+" days estimated"}</span></div><div class="bar"><span style="width:${pct}%"></span></div></div>`}).join("");
+}
+function addLog(){read();const entry={date:val("logDate")||new Date().toISOString().slice(0,10),dex:num("gainDex"),spd:num("gainSpd"),str:num("gainStr"),def:num("gainDef"),spent:num("spent"),happy:num("logHappy"),notes:val("logNotes")};d.logs.unshift(entry);localStorage.setItem("tornTrainingCommand",JSON.stringify(d));["gainDex","gainSpd","gainStr","gainDef","spent","logHappy","logNotes"].forEach(x=>put(x,""));renderHistory();}
+function renderHistory(){const el=document.getElementById("historyTable");if(!el)return;if(!d.logs.length){el.innerHTML='<p class="muted">No training entries yet. Record your gains after training to build a personal performance history.</p>';return}el.innerHTML=`<table><tr><th>Date</th><th>DEX</th><th>SPD</th><th>STR</th><th>DEF</th><th>Energy</th><th>Notes</th></tr>${d.logs.slice(0,100).map(x=>`<tr><td>${x.date}</td><td>+${fmt(x.dex)}</td><td>+${fmt(x.spd)}</td><td>+${fmt(x.str)}</td><td>+${fmt(x.def)}</td><td>${fmt(x.spent)}</td><td>${escapeHtml(x.notes||"")}</td></tr>`).join("")}</table>`}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function resetAllocation(){d.dexAlloc=75;d.spdAlloc=25;d.strAlloc=0;d.defAlloc=0;sync();saveAndRender()}
+function exportData(){read();const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="torn-training-backup.json";a.click();URL.revokeObjectURL(a.href)}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{d={...defaults,...JSON.parse(r.result)};sync();saveAndRender()}catch(e){alert("That backup file could not be read.")}};r.readAsText(f)}
+function showTab(id){document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===id))}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+load();sync();put("logDate",new Date().toISOString().slice(0,10));render();
+</script>
+</body></html>
